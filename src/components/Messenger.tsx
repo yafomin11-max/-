@@ -151,7 +151,7 @@ export default function Messenger() {
   };
 
   return (
-    <div className={`h-screen w-screen flex overflow-hidden ${theme === "dark" ? "bg-[#0e1621]" : "bg-[#e8e0d6]"}`}>
+    <div className={`h-full w-full flex overflow-hidden ${theme === "dark" ? "bg-[#0e1621]" : "bg-[#e8e0d6]"}`}>
       <div className={`${sidebarVisible ? "flex" : "hidden"} md:flex flex-col w-full md:w-[420px] flex-shrink-0 ${theme === "dark" ? "border-[#1e2c3a]" : "border-[#e0e0e0]"} border-r relative`}>
         <Sidebar selectedChatId={selectedChatId} onSelectChat={handleSelectChat} onOpenNewChat={() => setShowNewChat(true)} onOpenSettings={() => setShowSettings(true)} onCreateSavedMessages={createSavedMessages} theme={theme} />
       </div>

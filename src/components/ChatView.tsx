@@ -179,10 +179,13 @@ export default function ChatView({ chatId, onBack, theme }: ChatViewProps) {
       const mr = new MediaRecorder(stream, { mimeType: "audio/webm;codecs=opus" });
       mediaRecorderRef.current = mr; audioChunksRef.current = []; setRecordingDuration(0);
       mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+
+      let currentDuration = 0;
+
       mr.onstop = async () => {
         const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         stream.getTracks().forEach((t) => t.stop());
-        const dur = recordingDuration;
+        const dur = currentDuration;
         if (dur < 0.5) { setIsRecording(false); setRecordingDuration(0); return; }
         const reader = new FileReader();
         reader.onloadend = async () => {
