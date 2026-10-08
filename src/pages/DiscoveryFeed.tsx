@@ -1,32 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SwipeCard, { SwipeCardProps } from "../components/SwipeCard";
-
-const MOCK_DATA: SwipeCardProps[] = [
-  {
-    id: "1",
-    name: "Алиса, 19",
-    status: "Свободна",
-    commonFriendsCount: 3,
-    imageUrl: "https://rickandmortyapi.com/api/character/avatar/1.jpeg",
-  },
-  {
-    id: "2",
-    name: "Ева, 20",
-    status: "В поиске",
-    commonFriendsCount: 1,
-    imageUrl: "https://rickandmortyapi.com/api/character/avatar/2.jpeg",
-  },
-  {
-    id: "3",
-    name: "Макс, 21",
-    status: "Всё сложно",
-    commonFriendsCount: 5,
-    imageUrl: "https://rickandmortyapi.com/api/character/avatar/3.jpeg",
-  },
-];
+import { ref, onValue } from "firebase/database";
+import { db } from "../firebase";
 
 export default function DiscoveryFeed() {
-  const [cards, setCards] = useState<SwipeCardProps[]>(MOCK_DATA);
+  const [cards, setCards] = useState<SwipeCardProps[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch real users from Firebase Realtime Database
+    const usersRef = ref(db, 'users');
+    const unsubscribe = onValue(usersRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // Convert object to array of SwipeCardProps
+        const loadedCards: SwipeCardProps[] = Object.keys(data).map(key => ({
+          id: key,
+          name: data[key].name || "АНОНИМ",
+          status: data[key].status || "СВОБОДЕН(А)",
+          commonFriendsCount: data[key].commonFriendsCount || Math.floor(Math.random() * 5) + 1, // Fallback random
+          imageUrl: data[key].photoURL || `https://rickandmortyapi.com/api/character/avatar/${Math.floor(Math.random() * 50) + 1}.jpeg`,
+        }));
+        setCards(loadedCards);
+      } else {
+        setCards([]);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleSwipe = (id: string, direction: "left" | "right") => {
     // In a real app, send swipe result to backend here
@@ -35,25 +38,31 @@ export default function DiscoveryFeed() {
   };
 
   return (
-    <div className="relative w-full h-full bg-[#0e1621] overflow-hidden">
-      {/* Background ambient lighting */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/30 to-pink-900/20 pointer-events-none" />
+    <div className="relative w-full h-full bg-black overflow-hidden">
+      {/* Background ambient lighting (monochrome noise/texture placeholder) */}
+      <div className="absolute inset-0 bg-black pointer-events-none opacity-50" style={{ backgroundImage: 'radial-gradient(circle, #333 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
 
       {/* Header */}
-      <div className="absolute top-0 w-full z-10 p-6">
-        <h1 className="neon-text text-2xl font-bold text-center tracking-wide">
-          DISCOVERY
-        </h1>
+      <div className="absolute top-0 w-full z-10 p-6 flex justify-center mt-2">
+        <div className="parallelogram-shape bg-white text-black px-8 py-2">
+            <h1 className="text-2xl font-bold text-center tracking-[0.3em]">
+            PARALLEL
+            </h1>
+        </div>
       </div>
 
       {/* Cards Deck */}
       <div className="relative w-full h-full flex items-center justify-center">
-        {cards.length === 0 ? (
-          <div className="text-white/50 text-center flex flex-col items-center gap-4">
-            <div className="w-16 h-16 rounded-full glass flex items-center justify-center animate-pulse">
-              <span className="text-2xl">✨</span>
+        {loading ? (
+            <div className="text-white text-center flex flex-col items-center gap-4">
+              <div className="w-16 h-16 parallelogram-shape bg-white animate-pulse flex items-center justify-center"></div>
+              <p className="font-bold tracking-widest uppercase">ЗАГРУЗКА...</p>
             </div>
-            <p>Новых людей пока нет...</p>
+        ) : cards.length === 0 ? (
+          <div className="text-white text-center flex flex-col items-center gap-4">
+            <div className="w-16 h-16 parallelogram-shape bg-white border-4 border-black flex items-center justify-center opacity-50">
+            </div>
+            <p className="font-bold tracking-widest uppercase">НЕТ НОВЫХ ПРОФИЛЕЙ</p>
           </div>
         ) : (
           // Render cards in reverse order so the first card is on top
